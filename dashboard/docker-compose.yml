@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    container_name: kiln-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # 샘플 데이터를 컨테이너에 마운트
+      - ../설비 AI 관련:/app/설비 AI 관련:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: kiln-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: kiln-network
