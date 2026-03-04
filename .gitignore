@@ -19,6 +19,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# 샘플 데이터 (용량 큰 파일)
-설비 AI 관련/Sample 데이터/*.txt
-설비 AI 관련/Sample 데이터/*.csv
+# 복사본 파일만 제외
+설비 AI 관련/Sample 데이터/*복사본*
