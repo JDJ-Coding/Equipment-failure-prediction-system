@@ -18,8 +18,8 @@ An industrial equipment health monitoring web application for Korean manufacturi
 Equipment-failure-prediction-system/
 ├── CLAUDE.md                        ← This file
 └── 설비 AI 관련/                    ← "Equipment AI Related" (main project root)
-    ├── dashboard.py                 ← PRIMARY entry point (Streamlit)
-    ├── app.py                       ← Alternative entry point (Plotly Dash)
+    ├── dashboard.py                 ← Streamlit entry point (legacy)
+    ├── app.py                       ← PRIMARY entry point (Plotly Dash, drag/resize grid)
     ├── analysis.py                  ← Health scoring & anomaly detection logic
     ├── preprocess.py                ← Data loading & preprocessing pipeline
     ├── assets/
@@ -43,9 +43,11 @@ Equipment-failure-prediction-system/
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Language | Python | 3.9+ |
-| Primary UI | Streamlit | 1.28+ |
-| Alternative UI | Plotly Dash | (included in app.py) |
-| Charts | Plotly | 5.14+ |
+| Primary UI | Plotly Dash | 4.0+ |
+| Drag/resize grid | dash-draggable | 0.1.2+ |
+| UI components | dash-bootstrap-components | 2.0+ |
+| Legacy UI | Streamlit | 1.28+ |
+| Charts | Plotly | 6.0+ |
 | Data manipulation | Pandas | 2.0+ |
 | Numerics | NumPy | 1.24+ |
 | ML utilities | scikit-learn | 1.3+ |
@@ -53,7 +55,7 @@ Equipment-failure-prediction-system/
 
 **No requirements.txt exists.** Install dependencies with:
 ```bash
-pip install pandas numpy plotly streamlit scikit-learn openpyxl
+pip install dash dash-bootstrap-components dash-draggable pandas numpy plotly scikit-learn openpyxl
 ```
 
 ---
@@ -64,14 +66,15 @@ pip install pandas numpy plotly streamlit scikit-learn openpyxl
 # Navigate to project directory
 cd "설비 AI 관련"
 
-# Primary dashboard (Streamlit - recommended)
+# Primary dashboard (Plotly Dash — drag/resize/add/remove panels)
+python app.py
+# → http://127.0.0.1:8050
+
+# Legacy dashboard (Streamlit — static layout)
 streamlit run dashboard.py
 
-# Alternative dashboard (Plotly Dash)
-python app.py
-
-# Network-accessible deployment
-streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
+# Network-accessible Dash deployment
+python app.py  # edit host/port in app.run() call at bottom of file
 ```
 
 Once running, upload a CSV/TXT/XLSX file from `Sample 데이터/` to test functionality.
@@ -189,9 +192,38 @@ HEALTH_LEVELS = [
 - DataFrames serialized to/from JSON for cache compatibility
 - Dynamic category filtering via `st.multiselect`
 
-### `app.py` — Alternative Plotly Dash UI (650 lines)
+### `app.py` — Primary Plotly Dash UI with Draggable Grid (~400 lines)
 
-Parallel implementation of the same pipeline using Plotly Dash callbacks. Use when Streamlit's single-threaded model is insufficient or when more granular callback control is needed. Reads from the same `preprocess.py` and `analysis.py` modules.
+**This is now the main entry point.** Built on `dash-draggable` (react-grid-layout wrapper) providing:
+- **Drag** panels by their header bar to reposition
+- **Resize** panels by dragging the bottom-right corner handle
+- **Hide** panels via the ✕ button in each panel header
+- **Restore** hidden panels via the sidebar checklist
+- **Reset** all positions/visibility via the "↺ 레이아웃 초기화" button
+
+**Key constants:**
+```python
+ALL_PANELS = {pid: title, ...}   # 6 panel definitions
+DEFAULT_LAYOUT = [{i, x, y, w, h, minH, minW}, ...]  # default grid positions
+```
+
+**State management (two `dcc.Store` components):**
+- `store-equip-json-dict`: equipment DataFrames as JSON, updated on file upload
+- `layout-store`: panel positions/sizes, updated on drag/resize (via `main-grid.layout` input)
+
+**Callback chain:**
+```
+File upload   → store-equip-json-dict → update_all_panels → fill panel content
+Equip select  → update_all_panels
+Cat checklist → update_timeseries_by_cat
+
+Panel ✕ btn  → panel-visibility-toggle.value → update_grid_structure → main-grid.children
+Sidebar toggle → panel-visibility-toggle.value → update_grid_structure
+Drag/resize  → main-grid.layout → layout-store (save_layout)
+Reset button → layout-store + panel-visibility-toggle.value (reset to defaults)
+```
+
+**Note on content refresh after panel re-add:** When a hidden panel is restored, it appears with empty content until the user re-selects equipment or changes the rolling window. This is by design to avoid race conditions between grid structure and content callbacks.
 
 ---
 
