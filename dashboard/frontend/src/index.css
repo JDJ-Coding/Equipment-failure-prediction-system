@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #0b0e14;
+  color: #d0d6e0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+
+/* 패널 */
+.panel {
+  background: #131720;
+  border: 1px solid #1e2535;
+  border-radius: 4px;
+  padding: 12px;
+  overflow: hidden;
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8b96a9;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* KPI 숫자 */
+.kpi-value { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+.kpi-unit  { font-size: 1rem; font-weight: 400; margin-left: 3px; color: #8b96a9; }
+.kpi-sub   { font-size: 11px; color: #8b96a9; margin-top: 4px; }
+
+/* 색상 */
+.c-cyan   { color: #00b5d8; }
+.c-green  { color: #36d399; }
+.c-yellow { color: #fbbd23; }
+.c-red    { color: #f87272; }
+.c-purple { color: #a78bfa; }
+.c-orange { color: #fb923c; }
+.c-blue   { color: #60a5fa; }
+.c-muted  { color: #8b96a9; }
+
+/* 배지 */
+.badge { display:inline-flex; align-items:center; padding: 2px 7px; border-radius: 3px; font-size:11px; font-weight:600; }
+.badge-red    { background:#3d1515; color:#f87272; }
+.badge-yellow { background:#3d2f0a; color:#fbbd23; }
+.badge-green  { background:#0d2e1e; color:#36d399; }
+.badge-blue   { background:#0d1f3d; color:#60a5fa; }
+
+/* 테이블 */
+.data-table { width:100%; border-collapse:collapse; font-size:12px; }
+.data-table th { color:#8b96a9; font-weight:500; text-align:left; padding: 4px 8px; border-bottom: 1px solid #1e2535; }
+.data-table td { padding: 5px 8px; border-bottom: 1px solid #191f2e; }
+.data-table tr:hover td { background: #1a2035; }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0b0e14; }
+::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
