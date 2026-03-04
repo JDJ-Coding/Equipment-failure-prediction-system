@@ -17,8 +17,8 @@ An industrial equipment health monitoring web application for Korean manufacturi
 ```
 Equipment-failure-prediction-system/
 ├── CLAUDE.md                        ← This file
+├── .gitignore
 └── 설비 AI 관련/                    ← "Equipment AI Related" (main project root)
-    ├── dashboard.py                 ← Streamlit entry point (legacy)
     ├── app.py                       ← PRIMARY entry point (Plotly Dash, drag/resize grid)
     ├── analysis.py                  ← Health scoring & anomaly detection logic
     ├── preprocess.py                ← Data loading & preprocessing pipeline
@@ -27,11 +27,8 @@ Equipment-failure-prediction-system/
     ├── Sample 데이터/               ← "Sample Data"
     │   ├── 소성로 히터 csv파일.txt  ← Sample TXT sensor data (cp949)
     │   └── 본소성 히터 csv 파일.xlsx ← Sample Excel sensor data
-    └── docs/
-        ├── plan.md                  ← Developer implementation plan
-        ├── research.md              ← Architecture & technical notes
-        ├── 사용자 사용방법.md       ← End-user guide (Korean)
-        └── 관리자 사용방법.md       ← Admin/developer guide (Korean)
+    ├── 사용자 사용방법.md           ← End-user guide (Korean)
+    └── 관리자 사용방법.md           ← Admin/developer guide (Korean)
 ```
 
 > Note: The top-level project directory name uses Korean characters. Always reference files from the repo root or use absolute paths to avoid shell encoding issues.
@@ -46,7 +43,6 @@ Equipment-failure-prediction-system/
 | Primary UI | Plotly Dash | 4.0+ |
 | Drag/resize grid | dash-draggable | 0.1.2+ |
 | UI components | dash-bootstrap-components | 2.0+ |
-| Legacy UI | Streamlit | 1.28+ |
 | Charts | Plotly | 6.0+ |
 | Data manipulation | Pandas | 2.0+ |
 | Numerics | NumPy | 1.24+ |
@@ -70,10 +66,7 @@ cd "설비 AI 관련"
 python app.py
 # → http://127.0.0.1:8050
 
-# Legacy dashboard (Streamlit — static layout)
-streamlit run dashboard.py
-
-# Network-accessible Dash deployment
+# Network-accessible deployment
 python app.py  # edit host/port in app.run() call at bottom of file
 ```
 
@@ -105,7 +98,7 @@ analysis.py
     → rolling means per window
          │
          ▼
-dashboard.py / app.py
+app.py
   Renders gauge, risk cards, time series, report, priority table
 ```
 
@@ -175,26 +168,9 @@ HEALTH_LEVELS = [
 ]
 ```
 
-### `dashboard.py` — Primary Streamlit UI (690 lines)
+### `app.py` — Primary Plotly Dash UI with Draggable Grid
 
-**UI components rendered:**
-1. Sidebar: file uploader, equipment selector, rolling window radio, display checkboxes
-2. Easy explanation expander
-3. Health score gauge (Plotly)
-4. Top 5 risk sensor cards (color-coded HTML)
-5. Time series chart with anomaly shading (Plotly)
-6. Korean-language analysis report expander
-7. All-equipment priority table (sortable DataFrame)
-8. PPT 5-line summary (conditional)
-
-**Performance patterns:**
-- `@st.cache_data` on expensive functions (preprocessing, analysis)
-- DataFrames serialized to/from JSON for cache compatibility
-- Dynamic category filtering via `st.multiselect`
-
-### `app.py` — Primary Plotly Dash UI with Draggable Grid (~400 lines)
-
-**This is now the main entry point.** Built on `dash-draggable` (react-grid-layout wrapper) providing:
+**This is the main entry point.** Built on `dash-draggable` (react-grid-layout wrapper) providing:
 - **Drag** panels by their header bar to reposition
 - **Resize** panels by dragging the bottom-right corner handle
 - **Hide** panels via the ✕ button in each panel header
@@ -217,10 +193,10 @@ File upload   → store-equip-json-dict → update_all_panels → fill panel con
 Equip select  → update_all_panels
 Cat checklist → update_timeseries_by_cat
 
-Panel ✕ btn  → panel-visibility-toggle.value → update_grid_structure → main-grid.children
+Panel ✕ btn   → panel-visibility-toggle.value → update_grid_structure → main-grid.children
 Sidebar toggle → panel-visibility-toggle.value → update_grid_structure
-Drag/resize  → main-grid.layout → layout-store (save_layout)
-Reset button → layout-store + panel-visibility-toggle.value (reset to defaults)
+Drag/resize   → main-grid.layout → layout-store (save_layout)
+Reset button  → layout-store + panel-visibility-toggle.value (reset to defaults)
 ```
 
 **Note on content refresh after panel re-add:** When a hidden panel is restored, it appears with empty content until the user re-selects equipment or changes the rolling window. This is by design to avoid race conditions between grid structure and content callbacks.
@@ -258,21 +234,9 @@ Values `>= 60000` are treated as sensor error codes and replaced with `NaN`.
 - **Module-level dictionaries**: Used for configuration (no separate config files)
 
 ### Error Handling
-- UI callbacks wrapped in `try-except` with `st.error()` display
+- UI callbacks wrapped in `try-except`, errors displayed in the UI
 - Data parsing uses `pd.to_numeric(..., errors='coerce')` (silent NaN for bad values)
 - No custom exception classes — standard Python exceptions used
-
-### Caching Strategy
-```python
-@st.cache_data
-def cached_preprocess(file_bytes: bytes, file_ext: str) -> str:
-    df = load_raw(...)
-    return df.to_json()  # Must serialize DataFrames for cache compatibility
-
-# Usage:
-df = pd.read_json(cached_preprocess(file_bytes, ext))
-```
-Always serialize DataFrames to JSON when passing through `@st.cache_data` boundaries.
 
 ### Korean Language
 The UI, reports, and documentation heavily use Korean. Comments in source files may be in Korean or English. Do not alter Korean-language strings in UI text, report generators, or documentation files without explicit instruction.
@@ -329,7 +293,7 @@ Lower values = more anomalies detected = lower health scores (more conservative)
 
 **There is no automated test suite.** Manual testing steps:
 
-1. Start the application: `streamlit run dashboard.py`
+1. Start the application: `python app.py`
 2. Upload `Sample 데이터/소성로 히터 csv파일.txt`
 3. Verify:
    - Equipment dropdown populates with recognized equipment IDs
@@ -345,13 +309,9 @@ Lower values = more anomalies detected = lower health scores (more conservative)
 
 ## Known Issues & Planned Improvements
 
-From `plan.md` and `research.md`:
-
 | Issue | Status | Fix |
 |-------|--------|-----|
-| Main title hidden behind Streamlit header | Known | Increase `.block-container` padding-top to `3.5rem` |
-| Panel visibility limited to checkboxes | Planned | Implement `st.session_state`-based panel ordering with up/down buttons |
-| PPT summary nested in priority table | By design | Avoids duplicate analysis computation |
+| Panel content empty after re-add | By design | Re-select equipment to refresh |
 | No persistence between sessions | Architecture | Stateless by design; future: add SQLite for result archival |
 | No automated tests | Gap | Add pytest suite with sample data fixtures |
 | No requirements.txt | Gap | Add requirements file with pinned versions |
@@ -366,11 +326,11 @@ python -m venv .venv
 source .venv/bin/activate        # Linux/Mac
 # .venv\Scripts\activate         # Windows
 
-pip install pandas numpy plotly streamlit scikit-learn openpyxl
+pip install dash dash-bootstrap-components dash-draggable pandas numpy plotly scikit-learn openpyxl
 
 # 2. Run the app in development
 cd "설비 AI 관련"
-streamlit run dashboard.py
+python app.py
 
 # 3. Make changes, test manually with sample data
 
@@ -386,16 +346,14 @@ git push -u origin <branch-name>
 
 1. **Korean file/directory names**: The main project directory is named `설비 AI 관련` (Korean). Always quote paths in shell commands: `cd "설비 AI 관련"`.
 
-2. **No requirements.txt**: Dependencies are documented only in admin manual. Don't assume pip-installable packages beyond those listed above.
+2. **No requirements.txt**: Dependencies are documented only in this file. Don't assume pip-installable packages beyond those listed above.
 
-3. **Two UI implementations**: `dashboard.py` (Streamlit) is primary. `app.py` (Dash) is secondary/alternative. Both call the same `preprocess.py` and `analysis.py` — changes to those modules affect both UIs.
+3. **Single UI implementation**: `app.py` (Plotly Dash) is the only UI. It calls `preprocess.py` and `analysis.py` — changes to those modules affect the UI.
 
 4. **In-memory only**: No database, no persistent storage. All analysis runs fresh on each file upload. Session data is lost on page refresh.
 
 5. **Korean strings**: Do not auto-translate or modify Korean-language UI strings, variable names, or report templates without explicit user instruction.
 
-6. **Caching**: When adding new cached functions in Streamlit, DataFrames must be serialized (`.to_json()` / `pd.read_json()`) before/after `@st.cache_data` boundaries. Numpy arrays should use `.tolist()` / `np.array()`.
+6. **No test runner**: There is no `pytest`, `unittest`, or other test framework. Do not assume `make test` or `npm test` work. Manual testing via the running app is the only verification method.
 
-7. **No test runner**: There is no `pytest`, `unittest`, or other test framework. Do not assume `make test` or `npm test` work. Manual testing via the running app is the only verification method.
-
-8. **Sample data encoding**: The `.txt` sample file uses cp949 (Korean EUC) encoding. Opening it in a text editor or with `open(..., encoding='utf-8')` will produce garbled text. Always specify `encoding='cp949'`.
+7. **Sample data encoding**: The `.txt` sample file uses cp949 (Korean EUC) encoding. Opening it in a text editor or with `open(..., encoding='utf-8')` will produce garbled text. Always specify `encoding='cp949'`.
