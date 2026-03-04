@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(find \"C:\\\\Users\\\\장덕진\\\\Desktop\\\\코드\\\\first-folder\\\\설비 AI 관련\" -type f -exec ls -lh {} ;)",
+      "Bash(tr ';' '\\\\n')",
+      "Bash(cut -d';' -f1-10)",
+      "Bash(python3:*)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}
