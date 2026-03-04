@@ -87,6 +87,31 @@ body { background-color: #0e1117; color: #fafafa; font-family: 'Segoe UI', sans-
 .react-resizable-handle { opacity: 0.4; }
 .react-resizable-handle:hover { opacity: 1; }
 
+/* 패널 드래그 핸들 헤더 */
+.panel-drag-handle {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a4a;
+    cursor: grab;
+    user-select: none;
+    background-color: rgba(0, 180, 216, 0.05);
+    border-radius: 10px 10px 0 0;
+}
+.panel-drag-handle:active { cursor: grabbing; }
+.panel-drag-handle button:hover { color: #E74C3C !important; }
+
+/* 패널 콘텐츠 영역 */
+.panel-body {
+    padding: 10px 12px;
+    overflow-y: auto;
+    height: calc(100% - 42px);
+}
+
+/* 패널 카드 — 드래그 커서 제거(핸들만 허용) */
+.panel-card { cursor: default; }
+.panel-card:active { cursor: default; }
+
 /* Dropdown 다크 테마 */
 .Select-control { background-color: #2a2a4a !important; border-color: #444 !important; }
 .Select-value-label { color: #fff !important; }
